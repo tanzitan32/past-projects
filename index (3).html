@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- VIEW COUNTER CSS (paste in <head>) -->
+<style>
+/* small view counter box (bottom-right) */
+.view-counter {
+  position: fixed;
+  right: 18px; /* change to left:18px; if you want on left side */
+  bottom: 18px;
+  z-index: 99999;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 8px 12px;
+  font-family: Inter, system-ui, Arial, sans-serif;
+  font-size: 13px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.view-counter .eye {
+  width:18px;height:18px;display:inline-block;background:transparent;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+}
+.view-counter .count {
+  font-weight:700;
+  letter-spacing:0.3px;
+}
+.view-counter small {
+  display:block;color:rgba(255,255,255,0.75);font-weight:500;font-size:11px;opacity:0.9;
+}
+.view-counter .dot {
+  width:8px;height:8px;border-radius:50%;background:linear-gradient(90deg,#7c3aed,#06b6d4);box-shadow:0 6px 18px rgba(6,182,212,0.12);
+}
+</style>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚀 SaaS & Web Development Portfolio</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background: #0f172a;
+      color: #f8fafc;
+      line-height: 1.6;
+    }
+    header {
+      text-align: center;
+      padding: 50px 20px;
+      background: linear-gradient(90deg, #0ea5e9, #6366f1);
+      color: white;
+    }
+    header h1 {
+      font-size: 2.8rem;
+      margin-bottom: 10px;
+    }
+    header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+    section {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #1e293b;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    h2 {
+      color: #38bdf8;
+      margin-bottom: 15px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    ul li {
+      margin: 8px 0;
+      padding: 10px;
+      background: #334155;
+      border-radius: 8px;
+    }
+    .project {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #334155;
+      border-radius: 12px;
+    }
+    .links a {
+      display: inline-block;
+      margin: 10px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      color: white;
+      background: linear-gradient(90deg, #6366f1, #0ea5e9);
+      transition: transform 0.2s ease;
+    }
+    .links a:hover {
+      transform: scale(1.05);
+    }
+    footer {
+      text-align: center;
+      padding: 30px;
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+    .testimonial img, .project img {
+      max-width: 100%;
+      border-radius: 12px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+<!-- VIEW COUNTER HTML (place inside <body>) -->
+<div id="viewCounter" class="view-counter" title="Page views">
+  <div class="eye">👁️</div>
+  <div>
+    <div class="count" id="vc-count">--</div>
+    <small id="vc-label">Visitors</small>
+  </div>
+  <div class="dot" id="vc-dot" style="margin-left:8px;"></div>
+</div>
+<!-- VIEW COUNTER SCRIPT (place before </body>) -->
+<script>
+(function(){
+  // CONFIG: change these if you want a custom namespace/key
+  const namespace = 'tanveer-portfolio'; // make unique like yourname-portfolio
+  const key = 'pageviews';              // page identifier (can be multiple keys for multiple pages)
+
+  const apiHitUrl = `https://api.countapi.xyz/hit/${encodeURIComponent(namespace)}/${encodeURIComponent(key)}`;
+  const apiGetUrl = `https://api.countapi.xyz/get/${encodeURIComponent(namespace)}/${encodeURIComponent(key)}`;
+
+  const countEl = document.getElementById('vc-count');
+  const labelEl = document.getElementById('vc-label');
+  const dotEl = document.getElementById('vc-dot');
+
+  // Utility: nice formatting
+  function fmt(n){
+    if(n>=1000000) return (n/1000000).toFixed(1)+'M';
+    if(n>=1000) return (n/1000).toFixed(1)+'k';
+    return String(n);
+  }
+
+  // First try to increment counter (server-side)
+  fetch(apiHitUrl, { method: 'GET' })
+    .then(resp => resp.json())
+    .then(data => {
+      if(data && typeof data.value !== 'undefined'){
+        countEl.textContent = fmt(data.value);
+        labelEl.textContent = 'Visitors';
+        dotEl.style.opacity = '1';
+        // store last value locally so we may show if API fails later
+        try{ localStorage.setItem('vc-last', data.value); }catch(e){}
+      } else {
+        throw new Error('Unexpected response');
+      }
+    })
+    .catch(_err => {
+      // If hit failed, try to GET existing count
+      fetch(apiGetUrl, { method: 'GET' })
+        .then(r => r.json())
+        .then(d => {
+          if(d && typeof d.value !== 'undefined'){
+            countEl.textContent = fmt(d.value);
+            labelEl.textContent = 'Visitors';
+            dotEl.style.opacity = '0.9';
+          } else {
+            throw new Error('No value');
+          }
+        })
+        .catch(__err => {
+          // Final fallback: show a local count from localStorage (client-only)
+          try{
+            const last = parseInt(localStorage.getItem('vc-last') || '0', 10) || 0;
+            const local = last + 1; // optimistic increment
+            countEl.textContent = fmt(local);
+            labelEl.textContent = 'Local visits';
+            dotEl.style.opacity = '0.5';
+          }catch(e){
+            countEl.textContent = '--';
+            labelEl.textContent = 'Visitors';
+            dotEl.style.opacity = '0.3';
+          }
+        });
+    });
+
+  // Optional: when user clicks the counter, show more info (current raw value from API)
+  document.getElementById('viewCounter').addEventListener('click', function(){
+    // open a small prompt with the raw count (non-blocking)
+    fetch(apiGetUrl).then(r=>r.json()).then(d=>{
+      if(d && typeof d.value !== 'undefined'){
+        alert('Total page views: ' + d.value + '\\n(This value is stored at CountAPI for namespace:key ' + namespace + ':' + key + ')');
+      } else {
+        alert('Unable to fetch count details.');
+      }
+    }).catch(()=>{ alert('Unable to fetch count details.'); });
+  });
+})();
+</script>
+
+<header>
+  <!-- 🔗 Add your profile/logo image here -->
+  <img src="https://cdn.kwork.com/files/avatar/large_r/49/13682589-8.jpg" alt="" style="width:100px; border-radius:12px; margin-bottom:15px;">
+  <h1>🚀 SaaS & Web Development Portfolio</h1>
+  <p>Custom SaaS, Apps & Automation Solutions with Modern Tech ⚡</p>
+  <section>
+  <h2>📞 Contact</h2>
+  <p>Let’s build something amazing together 🚀</p>
+  <div class="links">
+    <a href="https://wa.link/rxtiua" target="_blank">💬 WhatsApp Me</a>
+    <!-- Add email / LinkedIn if you want -->
+  </div>
+</section>
+</header>
+
+<section>
+  <h2>👋 About Me</h2>
+  <p>
+    I’m a passionate developer specialized in building <b>SaaS platforms</b>, <b>custom web apps</b>, and <b>automation tools</b>. 
+    From MVPs to production-ready solutions, I create scalable products with AI integrations, strong backend systems, and user-friendly designs.
+  </p>
+</section>
+
+<section>
+  <h2>💡 Services Offered</h2>
+  <ul>
+    <li>⚙️ SaaS Development (MVP → Full Scale)</li>
+    <li>🌐 Web Development (Dashboards, Custom Tools)</li>
+    <li>📱 App Development (Cross-platform & Automation)</li>
+    <li>🤖 AI Integrations (ChatGPT, APIs, Bots)</li>
+    <li>☁️ Cloud Deployment (VPS, Vercel, AWS)</li>
+  </ul>
+</section>
+
+<section>
+  <h2>📂 Featured Projects</h2>
+
+  <div class="project">
+    <h3>🤖 Telegram Bot Creator SaaS (2025)</h3>
+    <p>Allows users to create and clone custom Telegram bots with full category/city controls, separate databases, and mass messaging. Includes integrated payment system and unlimited cloning options.</p>
+    <p><b>Tech:</b> Node.js, Python, Telegram API</p>
+    <img src="https://ik.imagekit.io/euhds2mtf/mindameti-dad-home.png" alt="">
+    <img src="https://ik.imagekit.io/euhds2mtf/mindameti-dad-bots.png" alt="">
+    <img src="https://ik.imagekit.io/euhds2mtf/mindameti-dad-products.png" alt="">
+   <video controls class="small-video">
+  <source src="https://ik.imagekit.io/euhds2mtf/video_2025-10-08_17-56-55.mp4" type="video/mp4">
+</video>
+
+<style>
+.small-video {
+  width: 400px;
+  height: 250px;
+  border-radius: 10px;
+}
+</style>
+
+       <video controls class="small-video">
+  <source src="https://ik.imagekit.io/euhds2mtf/telegram%20bot%20showcase.mp4" type="video/mp4">
+</video>
+
+<style>
+.small-video {
+  width: 400px;
+  height: 250px;
+  border-radius: 10px;
+}
+</style>
+
+  </div>
+
+  <div class="project">
+    <h3>📰 AI PBN Poster SaaS</h3>
+    <p>Automation platform for posting content across private blog networks (PBNs) with scheduling, account management, and smart AI-generated content options.</p>
+    <p><b>Tech:</b> Python, Puppeteer, APIs</p>
+    <img src="https://ik.imagekit.io/euhds2mtf/PBN-Poster-Pro-Professional-PBN-Management-10-06-2025_03_24_PM.png" alt="">
+    <img src="https://ik.imagekit.io/euhds2mtf/pbn%20poster%201.png" alt="">
+    <img src="https://ik.imagekit.io/euhds2mtf/Admin-Dashboard-PBN-Poster-Pro.png" alt="">
+    <img src="https://ik.imagekit.io/euhds2mtf/Pricing-Plans-PBN-Poster-Pro.png" alt="">
+  </div>
+
+  <div class="project">
+    <h3>🌍 AI Elementor Website Generator</h3>
+    <p>Generates complete WordPress Elementor websites from prompts, including content + images. Auto-installs plugins and delivers a live site instantly.</p>
+    <p><b>Tech:</b> OpenAI API, WordPress, Hostinger</p>
+    <img src="" alt="">
+    <section>
+  <embed src="aidevelop-by-us.pdf" type="application/pdf" width="100%" height="700px" />
+
+  <div style="text-align:center; margin-top:15px;">
+    <a href="aidevelop-by-us.pdf" target="_blank" 
+       style="display:inline-block; padding:10px 20px; background:linear-gradient(90deg,#6366f1,#0ea5e9); color:#fff; border-radius:8px; text-decoration:none; font-weight:bold;">
+       📥 Download PDF
+    </a>
+  </div>
+      
+</section>
+    
+  </div>
+
+  <div class="project">
+    <h3>📌 Citation Builder Tool</h3>
+    <p>Automated local citation builder that creates and manages business listings across multiple directories for local SEO campaigns.</p>
+    <p><b>Tech:</b> Python, Selenium, APIs</p>
+    <!-- Add screenshots here -->
+  </div>
+
+  <div class="project">
+    <h3>🛒 Amazon Automation Tool</h3>
+    <p>Custom tool to handle product research, listing generation, and posting automation for Amazon sellers.</p>
+    <p><b>Tech:</b> Python, Amazon API</p>
+    <!-- Add screenshots here -->
+  </div>
+
+  <div class="project">
+    <h3>📊 AI Lead Generation & Outreach Tool</h3>
+    <p>Automates business lead generation, personalized email outreach, and analytics. Complete SaaS solution with dashboard & CRM integrations.</p>
+    <p><b>Tech:</b> React, Node.js, Python, APIs</p>
+    <a href="https://a2zlead.com/" target="_blank">🔗 Live Demo</a>
+    <!-- Add screenshots here -->
+  </div>
+
+</section>
+
+<section>
+  <h2>📸 Reviews & Testimonials</h2>
+  <p>Here are real feedback and proof of work delivered to clients:</p>
+  <!-- Insert review images here -->
+  <img src="" alt="Review 1">
+  <img src="" alt="Review 2">
+</section>
+
+<section>
+  <h2>⚡ Tech Stack</h2>
+  <ul>
+    <li>🐍 Python, Node.js, JavaScript</li>
+    <li>⚛️ React, Next.js</li>
+    <li>☁️ Vercel, VPS, AWS</li>
+    <li>🔗 API Integrations (OpenAI, Shopify, Telegram, Amazon, WordPress)</li>
+  </ul>
+</section>
+
+<section>
+  <h2>🛠 How I Work</h2>
+  <p>My development process is simple and effective:</p>
+  <ul>
+    <li>🔍 Discovery & Planning</li>
+    <li>🖥 Development & Design</li>
+    <li>✅ Testing & QA</li>
+    <li>☁️ Deployment</li>
+    <li>🤝 Ongoing Support</li>
+  </ul>
+</section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Lead Generation & Outreach Tool – Portfolio</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background: #0f172a;
+      color: #f8fafc;
+      line-height: 1.6;
+    }
+    header {
+      text-align: center;
+      padding: 50px 20px;
+      background: linear-gradient(90deg, #0ea5e9, #6366f1);
+      color: white;
+    }
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+    section {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #1e293b;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    h2 {
+      color: #38bdf8;
+      margin-bottom: 10px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    ul li {
+      margin: 8px 0;
+      padding: 10px;
+      background: #334155;
+      border-radius: 8px;
+    }
+    .links a {
+      display: inline-block;
+      margin: 10px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      color: white;
+      background: linear-gradient(90deg, #6366f1, #0ea5e9);
+      transition: transform 0.2s ease;
+    }
+    .links a:hover {
+      transform: scale(1.05);
+    }
+   section {
+  max-width: 1000px;
+  margin: 40px auto;   /* centers the whole block */
+  padding: 20px;
+  background: #1e293b;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+.media {
+  text-align: center;
+  margin: 20px auto;   /* centers the media container */
+}
+
+.media iframe, 
+.media img, 
+.media div {
+  display: block;
+  margin: 0 auto;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 100%;
+}
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="https://cdn.kwork.com/files/avatar/large_r/49/13682589-8.jpg" 
+       alt="Trusted Ranking Spot Logo" 
+       style="width:100px; border-radius:12px; margin-bottom:15px;">
+  <h1>AI Lead Generation & Outreach Tool</h1>
+  <p>Smart automation for leads, outreach, and analytics 🚀</p>
+  <p><strong>🚀 Developed with pride by Trusted Ranking Spot Agency Team</strong></p>
+</header>
+
+
+  <section>
+    <h2>📌 Project Overview</h2>
+    <p>
+      Built a complete AI-powered SaaS tool that automates lead generation, 
+      personalized email outreach, bulk sending, and real-time analytics tracking. 
+      Delivered as a multi-milestone project for a client’s business domain.
+    </p>
+  </section>
+
+  <section>
+    <h2>✅ Key Features</h2>
+    <ul>
+      <li>AI Lead Generation (zip-code / business search)</li>
+      <li>AI Email Composer (personalized & bulk)</li>
+      <li>Bulk Email Sender + Follow-ups</li>
+      <li>Analytics Dashboard (open/click tracking, CRM integration)</li>
+      <li>Export & CSV support</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🗂 Milestones</h2>
+    <ul>
+      <li><b>Milestone 1:</b> UI + System Setup – <i>Completed</i></li>
+      <li><b>Milestone 2:</b> Lead Generation System – <i>Completed</i></li>
+      <li><b>Milestone 3:</b> AI Email Writer + Outreach – <i>Completed</i></li>
+      <li><b>Milestone 4:</b> Email Sending + Follow-ups – <i>Completed</i></li>
+      <li><b>Milestone 5:</b> Analytics + CRM Integration – <i>Completed</i></li>
+    </ul>
+  </section>
+
+  <section class="links">
+    <h2>🔗 Project Links</h2>
+    <a href="https://a2zlead.com/" target="_blank">Live Tool</a>
+    <a href="https://tinyurl.com/5a5ht47u" target="_blank">Project Files</a>
+  </section>
+
+  <section class="media">
+        <h2>🎥 Demo Video</h2>
+    <!-- Replace with your Loom/YouTube embed link -->
+    <iframe src="" allowfullscreen></iframe>
+    <div style="position: relative; padding-bottom: 58.91980360065466%; height: 0;"><iframe src="https://www.loom.com/embed/db2a94a1413c43bcbfb498d0bec26382?sid=85505ce1-7ffe-49a7-a876-a94f8fdeb480" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+
+    <h2>🖼 Screenshots</h2>
+    <!-- Replace with your screenshots -->
+    <img src="https://ik.imagekit.io/euhds2mtf/fetching%20dashboard.png" alt="Dashboard Screenshot">
+    <img src="https://ik.imagekit.io/euhds2mtf/ai%20composer%20.png" alt="AI Email Composer Screenshot">
+    <img src="https://ik.imagekit.io/euhds2mtf/bulk%20email%20sender.png" alt="bulk email sender">
+    <img src="https://ik.imagekit.io/euhds2mtf/analytics.png" alt="analytics">
+    <img src="https://ik.imagekit.io/euhds2mtf/setting.png" alt="setting">
+    <img src="https://ik.imagekit.io/euhds2mtf/planm%20selection.png" alt="pricing">
+
+    <h2>📋 Notion Checklist Proof</h2>
+    <img src="https://ik.imagekit.io/euhds2mtf/notion.png" alt="Project Checklist Proof">
+  </section>
+<section>
+<section>
+  <h2>📂 Other Development</h2>
+  <p>Here you can view another project we developed:</p>
+
+  <embed src="aidevelop-by-us.pdf" type="application/pdf" width="100%" height="700px" />
+
+  <div style="text-align:center; margin-top:15px;">
+    <a href="aidevelop-by-us.pdf" target="_blank" 
+       style="display:inline-block; padding:10px 20px; background:linear-gradient(90deg,#6366f1,#0ea5e9); color:#fff; border-radius:8px; text-decoration:none; font-weight:bold;">
+       📥 Download PDF
+    </a>
+  </div>
+  <p>👇 Explore our full SEO-AI-Strategies  
+   <a href="https://tinyurl.com/m5xm6wvr" target="_blank">🔗 https://tinyurl.com/m5xm6wvr</a>
+</p>
+
+</section>
+
+  <footer>
+    © 2025 Trusted Ranking Spot – Portfolio Case Study
+  </footer>
+
+</body>
+</html>
+  
+<section>
+  <h2>📞 Contact</h2>
+  <p>Let’s build something amazing together 🚀</p>
+  <div class="links">
+    <a href="https://wa.link/rxtiua" target="_blank">💬 WhatsApp Me</a>
+    <!-- Add email / LinkedIn if you want -->
+  </div>
+</section>
+
+<footer>
+  © 2025 Developer Portfolio – All Rights Reserved
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
